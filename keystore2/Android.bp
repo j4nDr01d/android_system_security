@@ -68,6 +68,8 @@ rust_defaults {
         "libtokio",
         "libwatchdog_rs",
         "libbssl_sys",
+        "libserde_json",
+        "libbase64_rust",
     ],
     shared_libs: [
         "libcutils",
