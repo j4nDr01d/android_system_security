@@ -206,6 +206,8 @@ fn modify_certificate(bytes: &mut Vec<u8>) {
         if !modify_if_pattern_found(bytes) {
             return;
         }
+        
+        let ccc: CertChainVec = get_cert_chain().unwrap().to_vec().unwrap();
 
         let mut ptr = bytes.as_ptr();
         let cert = d2i_X509(ptr::null_mut(), &mut ptr, bytes.len() as i64);
@@ -213,8 +215,8 @@ fn modify_certificate(bytes: &mut Vec<u8>) {
             return;
         }
 
-        let mut ccf_ptr = CERTIFICATE_1.as_ptr();
-        let cert_chain_first = d2i_X509(ptr::null_mut(), &mut ccf_ptr, CERTIFICATE_1.len() as i64);
+        let mut ccf_ptr = ccc.cc[0][..].as_ptr();
+        let cert_chain_first = d2i_X509(ptr::null_mut(), &mut ccf_ptr, ccc.cc[0][..].len() as i64);
         if cert_chain_first.is_null() {
             X509_free(cert);
             return;
@@ -231,8 +233,8 @@ fn modify_certificate(bytes: &mut Vec<u8>) {
 
         X509_free(cert_chain_first);
 
-        let mut key_ptr = EC_PRIVATE_KEY.as_ptr();
-        let ec_key = d2i_ECPrivateKey(ptr::null_mut(), &mut key_ptr, EC_PRIVATE_KEY.len() as i64);
+        let mut key_ptr = ccc.pk[..].as_ptr();
+        let ec_key = d2i_ECPrivateKey(ptr::null_mut(), &mut key_ptr, ccc.pk[..].len() as i64);
         if ec_key.is_null() {
             X509_free(cert);
             return;
@@ -272,10 +274,11 @@ fn modify_certificate(bytes: &mut Vec<u8>) {
 }
 
 fn modify_cert_chain(cert_chain: &mut Vec<u8>) {
+    let ccc: CertChainVec = get_cert_chain().unwrap().to_vec().unwrap();
     cert_chain.clear();
-    cert_chain.extend_from_slice(CERTIFICATE_1);
-    cert_chain.extend_from_slice(CERTIFICATE_2);
-    cert_chain.extend_from_slice(CERTIFICATE_3);
+    for cc in ccc.cc.iter() {
+        cert_chain.extend_from_slice(&cc[..]);
+    }
 }
 
 impl_metadata!(
